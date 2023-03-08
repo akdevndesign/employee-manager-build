@@ -3,34 +3,8 @@
 //const mysql = require('mysql2');
 
 const inquirer = require('inquirer');
-const db = require(./config/index);
+const db = require('./config/index');
 const conTable = require('console.table');
-
-const db = mysql.createConnection(
-{
-    host: process.env.MYSQL_HOST,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQL_DATABASE
-},
-  console.log('Connected to Employee DB')
-);
-
-db.connect((err) => {
-  if (err) {
-    console.error('Error connecting to database:', err);
-  } else {
-    console.log('Connected to Employee DB');
-  }
-});
-
-//create connection to mysql DB
-const connection = await mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  database: 'employee_db',
-  password: '12345'
-});
 
 //create async init function to ask user what they would like to do
 async function init() {
@@ -39,9 +13,13 @@ async function init() {
       type: 'list',
       choices: ['View all Employees', 'Add Employee', 'Update Employee Role', 'View All Roles', 'Add Role', 'View All Departments', 'Add Deptartment', 'Exit'],
       message: 'What would you like to do?'
+  }, 
+  {
+    
+
   });
-};
-switch (new choice.welcomePrompt){
+
+switch (choice.welcomePrompt){
   case 'View all Employees':
     viewAllEmployees()
     break;
@@ -67,55 +45,90 @@ switch (new choice.welcomePrompt){
     exitApp();
     break;
   };
+
+};
   //View all employees function
+
+  //employee_id, employee_first, employee_last, employee.role_id = emp_role.role_title and (department_id = department.department_name)
+  //and salary, manager = concat employee.employee_first & employee.employee_last
   async function viewAllEmployees(){
-    db.query(`SELECT * FROM employees`, function (err, results){
-      console.log(`\n`+ results);
+    db.query(`SELECT employee.employee_id`,
+    function (err, results){
+      console.log(`\n`);
+      console.table(results);
+      console.log(`\n`);
       init();
     })
   };
   //Add Employee function
-  async function addEmployee(){
+  function addEmployee(){
 
   };
       
   //Update Employee Role
-  async function addRole(){
-    
+  function addRole(){
+    const query = 'SELECT department_id AS value, department_name AS name FROM department';
+    db.query(query, (err, results) => {
+    if (err) throw err;
+    inquirer.prompt([{
+    type: 'input',
+    message: 'What is the title of the role?',
+    name: 'newRole',
+    validate: validateName
+  }, 
+  {
+    type: 'input',
+    message: 'What is the salary of the role?',
+    name: 'newRoleSalary',
+    validate: validateNumber
+  }, 
+  {
+    type: 'list',
+    message: 'What is the department for the role?',
+    name: 'newRoleDept',
+    choices: results,
+    validate: validateNumber
+  }
+]).then((function(res){
+    db.query("INSERT INTO emp_role SET ?", {role_title: res.newRole, role_salary: res.newRoleSalary, department_id: res.newRoleDeptID})
+    console.log(`\n Role successfully entered.\n`);
+    init();
+  }))
+});
   };
 
   //view all departments function
-  async function viewAllDepartments(){
+function viewAllDepartments(){
       db.query(`SELECT * FROM department`, function (err, results){
-        console.log(`\n`+ results);
+        console.log(`\n`)
+        console.table(results)
         init();
       })
   };
 
   //view all roles function
-  async function viewAllRoles(){
-    db.query(`SELECT * FROM role`, function (err, results){
-      console.log(`\n`+ results);
+ function viewAllRoles(){
+    db.query(`SELECT * FROM emp_role`, function (err, results){
+      console.log(`\n`);
+      console.table(results)
       init();
     })
   };
 
 
   
-  async function addDeptartment(){
-    const addDept = await inquirer.prompt({
+  function addDeptartment(){
+    inquirer.prompt({
         type: 'input',
         message: 'What is the name of the department?',
-        name: 'departmentName',
+        name: 'newDept',
         validate: validateString
-      });
-      const query = `
-      INSERT INTO department (name)
-      VALUES ("${department.departmentName}")
-      `;
-  
-      const [rows, fields] = await connection.execute(query);
-      console.log(`${rows.affectedRows} row(s) inserted`);
+      })
+      .then((function(res){
+        db.query("INSERT INTO department SET ?", {department_name: res.newDept})
+        console.log(`\n Department successfully entered.\n`);
+        init();
+      }))
     };
  
 
@@ -160,38 +173,38 @@ init();
 
 //~~~~~~~~~~~Validate functions~~~~~~~~~~~~~~~
 // //create input validation checks for prompt questions
-// const validateName = (input) => {
-//   const name = input;
-//   if (typeof input !== 'string') {
-//     return 'Please re-enter employee name.';
-//   }
-//   if (name === '') {
-//     return 'Please enter a name.';
-//   }
-//   return true;
-// };
+const validateName = (input) => {
+  const name = input;
+  if (typeof input !== 'string') {
+    return 'Please re-enter employee name.';
+  }
+  if (name === '') {
+    return 'Please enter a name.';
+  }
+  return true;
+};
 // //inquirer defaults to string so convert input to int and check for error.
-// const validateNumber = (input) => {
-//   const isNum = parseInt(input);
-//   if (Number.isNaN(isNum)) {
-//     return 'Please a number.';
-//   }
-//   if (isNum === '') {
-//     return 'Please enter a number.';
-//   }
-//   return true;
-// };
-// //check string inputs for 
-// const validateString = (input) => {
-//   const isString = input;
-//   if (typeof isString !== 'string') {
-//     return 'Please re-enter.';
-//   }
-//   if (isString === '') {
-//     return 'Please enter.';
-//   }
-//   return true;
-// };
+const validateNumber = (input) => {
+  const isNum = parseInt(input);
+  if (Number.isNaN(isNum)) {
+    return 'Please a number.';
+  }
+  if (isNum === '') {
+    return 'Please enter a number.';
+  }
+  return true;
+};
+//check string inputs for 
+const validateString = (input) => {
+  const isString = input;
+  if (typeof isString !== 'string') {
+    return 'Please re-enter.';
+  }
+  if (isString === '') {
+    return 'Please enter.';
+  }
+  return true;
+};
 
 // // Create an array of prompts for inquirer
 // const employeeQuestions = [

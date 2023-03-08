@@ -8,23 +8,20 @@ CREATE TABLE department (
   department_name VARCHAR(30) NOT NULL
 );
 
-CREATE TABLE role (
+CREATE TABLE emp_role (
   role_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   role_title VARCHAR(30) NOT NULL,
   role_salary DECIMAL,
-  department_id INT,
-  FOREIGN KEY (department_id) REFERENCES department(department_id)
+  department_id INT
 );
 
-CREATE TABLE employee (
+CREATE TABLE employees (
   employee_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  employee_first_name VARCHAR(30) NOT NULL,
-  employee_last_name VARCHAR(30) NOT NULL,
+  emp_first_name VARCHAR(30) NOT NULL,
+  emp_last_name VARCHAR(30) NOT NULL,
   role_id INT,
-  manager_id INT,
-  FOREIGN KEY (role_id) REFERENCES role(role_id),
-  FOREIGN KEY (manager_id) REFERENCES employee(employee_id)
-);
+  manager_id INT
+  );
 
 
 
