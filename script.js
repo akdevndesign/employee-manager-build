@@ -133,6 +133,7 @@ async function init() {
       };
     };
 
+
   async function roleChoices() {
     return new Promise((resolve, reject) => {
       const query = 'SELECT role_title FROM emp_role';
@@ -143,7 +144,73 @@ async function init() {
     });
   };
 
+  async function addRole() {
+    const query = 'SELECT department_id AS value, department_name AS name FROM department';
+    db.query(query, (err, results) => {
+      if (err) throw err;
+      inquirer.prompt([{
+          type: 'input',
+          message: 'What is the title of the role?',
+          name: 'newRole',
+          validate: validateName
+        },
+        {
+          type: 'input',
+          message: 'What is the salary of the role?',
+          name: 'newRoleSalary',
+          validate: validateNumber
+        },
+        {
+          type: 'list',
+          message: 'What is the department for the role?',
+          name: 'newRoleDept',
+          choices: results,
+          validate: validateNumber
+        }
+      ]).then((function(res) {
+        db.query("INSERT INTO emp_role SET ?", {
+          role_title: res.newRole,
+          role_salary: res.newRoleSalary,
+          department_id: res.newRoleDept
+        }, (err, res) => {
+          if (err) throw err;
+          console.log(`\n Role successfully entered.\n`);
+          init();
+        });
+      }));
+    });
+  }
+
+
   //Update Employee Role
+  async function updateEmployeeRole() {
+    const employees = await db.promise().query('SELECT employee_id, CONCAT(emp_first_name, " ", emp_last_name) AS name FROM employees');
+    const roles = await db.promise().query('SELECT role_id, role_title AS title FROM emp_role');
+    const { employeeId, roleId } = await inquirer.prompt([
+      {
+        type: 'list',
+        message: 'Which employee would you like to update?',
+        name: 'employeeId',
+        choices: employees[0].map(employee => ({
+          value: employee.employee_id,
+          name: employee.name
+        }))
+      },
+      {
+        type: 'list',
+        message: 'What is the employee\'s new role?',
+        name: 'roleId',
+        choices: roles[0].map(role => ({
+          value: role.role_id,
+          name: role.title
+        }))
+      }
+    ]);
+    await db.promise().query(`UPDATE employees SET role_id = ${roleId} WHERE employee_id = ${employeeId}`);
+    console.log(`\nEmployee role updated successfully.\n`);
+    init();
+  };
+  //add employee function
   async function addEmployee() {
     const addEmployeeQuestions = [
       {
@@ -300,107 +367,3 @@ const validateString = (input) => {
   }
   return true;
 };
-
-// // Create an array of prompts for inquirer
-// const employeeQuestions = [
-//       {
-//         type: 'input',
-//         message: 'What is the team member name?',
-//         name: 'name',
-//         validate: validateName
-//       },
-//       {
-//         type: 'input',
-//         message: 'What is their employee ID?',
-//         name: 'id',
-//         validate: validateNumber
-
-//       },
-//       {
-//         type: 'input',
-//         message: 'What is their email?',
-//         name: 'email',
-//         validate: validateEmail
-
-//       },
-//       {
-//         type: 'list',
-//         message: 'What is their role?',
-//         choices: roles,
-//         name: 'role',
-//       },
-//       {
-//         type: 'input',
-//         message: 'What is their office number?',
-//         name: 'officeumber',
-//         when: employee => employee.role === "Manager",
-//         validate: validateNumber
-
-//       },
-//       {
-//         type: 'input',
-//         message: 'What is their GitHub Username?',
-//         name: 'gitname',
-//         when: employee => employee.role === "Engineer",
-//         validate: validateString
-
-//       },
-//       {
-//         type: 'input',
-//         message: 'What is their school?',
-//         name: 'school',
-//         when: employee => employee.role === "Intern",
-//         validate: validateString
-//       },
-//     ];
-
-// //create async function that invokes terminal prompts and switch statement to pass results to class modules
-// async function enterEmployeeProfile(){
-
-//   let employeeProfile = await inquirer.prompt(employeeQuestions);
-  
-//   switch (employeeProfile.role) {
-//     case 'Engineer':
-//       let addEngineer = new Engineer(employeeProfile.name, employeeProfile.id, employeeProfile.email, employeeProfile.gitname)
-//       employeeData.push(addEngineer);
-//       break;
-//     case 'Manager':
-//       let addManager = new Manager(employeeProfile.name, employeeProfile.id, employeeProfile.email, employeeProfile.officenumber)
-//       employeeData.push(addManager);
-//       break;
-//     case 'Intern':
-//       let addIntern = new Intern(employeeProfile.name, employeeProfile.id, employeeProfile.email, employeeProfile.school)
-//       employeeData.push(addIntern);
-//       break;
-//     default: 
-//       writeToFile();
-      
-
-//   }
-
-//   //Await answers from requestEmp and call function again;
-//   const addMore = await inquirer.prompt([
-//     {
-//       name: 'addAnother',
-//       type: 'confirm',
-//       message: 'Would you like to add another employee?',
-//       default: false,
-//     },
-
-//   ]);
-//   //create conditional statement to end session if no more employees to add
-//   if (addMore.addAnother === true) {
-//     enterEmployeeProfile();
-//   } else {
-//     writeToFile()
-//     process.exit(console.log("\nGoodbye!"));
-//   }
-// }
-
-// //Write to HTML function
-// function writeToFile() {
-
-//   fs.writeFileSync(fileName, generateHTML(employeeData))
-//   console.log('Employee data:', employeeData)
-//   console.log("File created successfully!");
-//
