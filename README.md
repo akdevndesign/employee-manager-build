@@ -15,7 +15,7 @@ Download repository, install packages using "npm install" and run using the foll
 ## Use
 This project is intended for educational purposes.
 ## Visual
-![Visual](https://user-images.githubusercontent.com/115499632/228073625-2c621675-69ea-4416-bc44-55ec7752824b.mov)
+https://user-images.githubusercontent.com/115499632/228073625-2c621675-69ea-4416-bc44-55ec7752824b.mov
 ## Contributing
 None.
 ## License
